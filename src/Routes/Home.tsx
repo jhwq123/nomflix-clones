@@ -1,13 +1,20 @@
 import styled from "styled-components";
 import { useQuery } from "react-query";
-import { getMovies, IGetMoviesResult } from "../api";
+import {
+  nowMovies,
+  topRatedMovies,
+  upcomingMovies,
+  IGetNowMoviesResult,
+  IGetTopRatedMoviesResult,
+  IGetUpcomingMoviesResult,
+} from "../api";
 import { makeImagePath } from "../utils";
 import { motion, AnimatePresence, useViewportScroll } from "framer-motion";
 import { useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom";
-import { moveEmitHelpers } from "typescript";
 
 const Wrapper = styled.div`
+  height: 200vh;
   background-color: black;
 `;
 
@@ -39,10 +46,19 @@ const Overview = styled.p`
   font-size: 36px;
 `;
 
+const SlideTitle = styled.h3`
+  font-size: 32px;
+  margin: 20px;
+`;
+
 const Slider = styled.div`
   background-color: white;
   position: relative;
-  top: -100px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-itmes: center;
+  margin-bottom: 230px;
 `;
 
 const Row = styled(motion.div)`
@@ -50,7 +66,7 @@ const Row = styled(motion.div)`
   gap: 5px;
   grid-template-columns: repeat(6, 1fr);
   position: absolute;
-  width: 100%;
+  width: 90%;
 `;
 
 const Box = styled(motion.div)<{ bgPhoto: string }>`
@@ -101,6 +117,10 @@ const BigMovie = styled(motion.div)`
   border-radius: 15px;
   overflow: hidden;
   background-color: ${(props) => props.theme.black.lighter};
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const BigCover = styled.div`
@@ -126,16 +146,55 @@ const BigOverview = styled.p`
   top: -80px;
 `;
 
+const BigVote = styled.div`
+  width: 400px;
+  height: 70px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  top: -100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  margin-bottom: 30px;
+`;
+
+const BtnPrev = styled(motion.div)`
+  width: 50px;
+  height: 200px;
+  background-color: rgba(0, 0, 0, 0.3);
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  left: 0;
+  z-index: 1;
+  cursor: pointer;
+`;
+
+const BtnNext = styled(motion.div)`
+  width: 50px;
+  height: 200px;
+  background-color: rgba(0, 0, 0, 0.3);
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  right: 0;
+  z-index: 1;
+  cursor: pointer;
+`;
+
 const rowVariants = {
-  hidden: {
-    x: window.outerWidth + 10,
-  },
+  hidden: (nowBack: boolean) => ({
+    x: nowBack ? -window.outerWidth - 10 : window.outerWidth + 10,
+  }),
   visible: {
     x: 0,
   },
-  exit: {
-    x: -window.outerWidth - 10,
-  },
+  exit: (nowBack: boolean) => ({
+    x: nowBack ? window.outerWidth + 10 : -window.outerWidth - 10,
+  }),
 };
 
 const boxVariants = {
@@ -146,7 +205,7 @@ const boxVariants = {
     scale: 1.3,
     y: -50,
     transition: {
-      delay: 0.5,
+      delay: 0.2,
       duration: 0.3,
       type: "tween",
     },
@@ -168,59 +227,146 @@ const offset = 6;
 
 function Home() {
   const history = useHistory();
-  const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId");
   const { scrollY } = useViewportScroll();
-  const { data, isLoading } = useQuery<IGetMoviesResult>(
-    ["movies", "nowPlaying"],
-    getMovies
-  );
-  const [index, setIndex] = useState(0);
-  const [leaving, setLeaving] = useState(false);
-  const increaseIndex = () => {
-    if (data) {
-      if (leaving) return;
-      toggleLeaving();
-      const totalMovies = data.results.length - 1;
+
+  // Now playing Movies
+  const { data: nowData, isLoading: nowLoading } =
+    useQuery<IGetNowMoviesResult>(["movies", "nowPlaying"], nowMovies);
+  const [nowIndex, setNowIndex] = useState(0);
+  const [nowLeaving, setNowLeaving] = useState(false);
+  const [nowBack, setNowBack] = useState(false);
+  const increaseNowIndex = () => {
+    if (nowData) {
+      if (nowLeaving) return;
+      toggleNowLeaving();
+      const totalMovies = nowData.results.length - 1;
       const maxIndex = Math.floor(totalMovies / offset) - 1;
-      setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+      setNowIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+      setNowBack(false);
     }
   };
-  const toggleLeaving = () => setLeaving((prev) => !prev);
+  const decreaseNowIndex = () => {
+    if (nowData) {
+      if (nowLeaving) return;
+      toggleNowLeaving();
+      const totalMovies = nowData.results.length - 1;
+      const maxIndex = Math.floor(totalMovies / offset) - 1;
+      setNowIndex((prev) => (prev === 0 ? maxIndex : prev - 1));
+      setNowBack(true);
+    }
+  };
+  const toggleNowLeaving = () => setNowLeaving((prev) => !prev);
+
+  // top rated movies
+  const { data: topData, isLoading: topLoading } =
+    useQuery<IGetTopRatedMoviesResult>(["movies", "top"], topRatedMovies);
+  const [topIndex, setTopIndex] = useState(0);
+  const [topLeaving, setTopLeaving] = useState(false);
+  const [topBack, setTopBack] = useState(false);
+  const increaseTopIndex = () => {
+    if (topData) {
+      if (topLeaving) return;
+      toggleTopLeaving();
+      const totalMovies = topData.results.length - 1;
+      const maxIndex = Math.floor(totalMovies / offset) - 1;
+      setTopIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+      setTopBack(false);
+    }
+  };
+  const decreaseTopIndex = () => {
+    if (topData) {
+      if (topLeaving) return;
+      toggleTopLeaving();
+      const totalMovies = topData.results.length - 1;
+      const maxIndex = Math.floor(totalMovies / offset) - 1;
+      setTopIndex((prev) => (prev === 0 ? maxIndex : prev - 1));
+      setTopBack(true);
+    }
+  };
+  const toggleTopLeaving = () => setTopLeaving((prev) => !prev);
+
+  // Upcoming movies
+  const { data: upData, isLoading: upComing } =
+    useQuery<IGetUpcomingMoviesResult>(["movies", "up"], upcomingMovies);
+  const [upIndex, setUpIndex] = useState(0);
+  const [upLeaving, setUpLeaving] = useState(false);
+  const [upBack, setUpBack] = useState(false);
+  const toggleUpLeaving = () => setUpLeaving((prev) => !prev);
+  const increaseUpIndex = () => {
+    if (upData) {
+      if (upLeaving) return;
+      toggleUpLeaving();
+      const totalMovies = upData.results.length - 1;
+      const maxIndex = Math.floor(totalMovies / offset) - 1;
+      setUpIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+      setUpBack(false);
+    }
+  };
+  const decreaseUpIndex = () => {
+    if (upData) {
+      if (upLeaving) return;
+      toggleUpLeaving();
+      const totalMovies = upData.results.length - 1;
+      const maxIndex = Math.floor(totalMovies / offset) - 1;
+      setUpIndex((prev) => (prev === 0 ? maxIndex : prev - 1));
+      setUpBack(true);
+    }
+  };
+
   const onBoxClicked = (movieId: number) => {
     history.push(`/movies/${movieId}`);
   };
   const onOverlayClick = () => history.push("/");
-  const clickedMovie =
+  const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId");
+  const clickedNowMovie =
     bigMovieMatch?.params.movieId &&
-    data?.results.find(
+    nowData?.results.find(
+      (movie) => movie.id + "" === bigMovieMatch?.params.movieId
+    );
+  const clickedTopMovie =
+    bigMovieMatch?.params.movieId &&
+    topData?.results.find(
+      (movie) => movie.id + "" === bigMovieMatch?.params.movieId
+    );
+  const clickedUpMovie =
+    bigMovieMatch?.params.movieId &&
+    upData?.results.find(
       (movie) => movie.id + "" === bigMovieMatch?.params.movieId
     );
   return (
     <Wrapper>
-      {isLoading ? (
+      {nowLoading && topLoading && upComing ? (
         <Loader>Loading</Loader>
       ) : (
         <>
           <Banner
-            onClick={increaseIndex}
-            bgPhoto={makeImagePath(data?.results[0].backdrop_path || "")}
+            bgPhoto={makeImagePath(nowData?.results[0].backdrop_path || "")}
           >
-            <Title>{data?.results[0].title}</Title>
-            <Overview>{data?.results[1].overview}</Overview>
+            <Title>{nowData?.results[0].title}</Title>
+            <Overview>{nowData?.results[1].overview}</Overview>
           </Banner>
+          <SlideTitle>Now Playing Movies</SlideTitle>
           <Slider>
-            <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
+            <BtnPrev onClick={decreaseNowIndex} whileHover={{ scale: 1.1 }}>
+              PREV
+            </BtnPrev>
+            <AnimatePresence
+              initial={false}
+              onExitComplete={toggleNowLeaving}
+              custom={nowBack}
+            >
               <Row
+                custom={nowBack}
                 variants={rowVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
                 transition={{ type: "tween", duration: 1 }}
-                key={index}
+                key={nowIndex}
               >
-                {data?.results
+                {nowData?.results
                   .slice(1)
-                  .slice(offset * index, offset * index + offset)
+                  .slice(offset * nowIndex, offset * nowIndex + offset)
                   .map((movie) => (
                     <Box
                       layoutId={movie.id + ""}
@@ -239,6 +385,97 @@ function Home() {
                   ))}
               </Row>
             </AnimatePresence>
+            <BtnNext onClick={increaseNowIndex} whileHover={{ scale: 1.1 }}>
+              NEXT
+            </BtnNext>
+          </Slider>
+          <SlideTitle>Top Rated Movies</SlideTitle>
+          <Slider>
+            <BtnPrev onClick={decreaseTopIndex} whileHover={{ scale: 1.1 }}>
+              PREV
+            </BtnPrev>
+            <AnimatePresence
+              initial={false}
+              onExitComplete={toggleTopLeaving}
+              custom={topBack}
+            >
+              <Row
+                custom={topBack}
+                variants={rowVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ type: "tween", duration: 1 }}
+                key={topIndex}
+              >
+                {topData?.results
+                  .slice(1)
+                  .slice(offset * topIndex, offset * topIndex + offset)
+                  .map((movie) => (
+                    <Box
+                      layoutId={movie.id + ""}
+                      key={movie.id}
+                      variants={boxVariants}
+                      onClick={() => onBoxClicked(movie.id)}
+                      initial="normal"
+                      whileHover="hover"
+                      transition={{ type: "tween" }}
+                      bgPhoto={makeImagePath(movie.backdrop_path, "w500")}
+                    >
+                      <Info variants={infoVariants}>
+                        <h4>{movie.title}</h4>
+                      </Info>
+                    </Box>
+                  ))}
+              </Row>
+            </AnimatePresence>
+            <BtnNext onClick={increaseTopIndex} whileHover={{ scale: 1.1 }}>
+              NEXT
+            </BtnNext>
+          </Slider>
+          <SlideTitle>Upcomming Movies</SlideTitle>
+          <Slider>
+            <BtnPrev onClick={decreaseUpIndex} whileHover={{ scale: 1.1 }}>
+              PREV
+            </BtnPrev>
+            <AnimatePresence
+              initial={false}
+              onExitComplete={toggleUpLeaving}
+              custom={upBack}
+            >
+              <Row
+                custom={upBack}
+                variants={rowVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ type: "tween", duration: 1 }}
+                key={upIndex}
+              >
+                {upData?.results
+                  .slice(1)
+                  .slice(offset * upIndex, offset * upIndex + offset)
+                  .map((movie) => (
+                    <Box
+                      layoutId={movie.id + ""}
+                      key={movie.id}
+                      variants={boxVariants}
+                      onClick={() => onBoxClicked(movie.id)}
+                      initial="normal"
+                      whileHover="hover"
+                      transition={{ type: "tween" }}
+                      bgPhoto={makeImagePath(movie.backdrop_path, "w500")}
+                    >
+                      <Info variants={infoVariants}>
+                        <h4>{movie.title}</h4>
+                      </Info>
+                    </Box>
+                  ))}
+              </Row>
+            </AnimatePresence>
+            <BtnNext onClick={increaseUpIndex} whileHover={{ scale: 1.1 }}>
+              NEXT
+            </BtnNext>
           </Slider>
           <AnimatePresence>
             {bigMovieMatch ? (
@@ -254,18 +491,51 @@ function Home() {
                   }}
                   layoutId={bigMovieMatch.params.movieId}
                 >
-                  {clickedMovie && (
+                  {clickedNowMovie && (
                     <>
                       <BigCover
                         style={{
                           backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
-                            clickedMovie.backdrop_path,
+                            clickedNowMovie.backdrop_path,
                             "w500"
                           )})`,
                         }}
                       />
-                      <BigTitle>{clickedMovie.title}</BigTitle>
-                      <BigOverview>{clickedMovie.overview}</BigOverview>
+                      <BigTitle>{clickedNowMovie.title}</BigTitle>
+                      <BigOverview>{clickedNowMovie.overview}</BigOverview>
+                    </>
+                  )}
+                  {clickedTopMovie && (
+                    <>
+                      <BigCover
+                        style={{
+                          backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
+                            clickedTopMovie.backdrop_path,
+                            "w500"
+                          )})`,
+                        }}
+                      />
+                      <BigTitle>{clickedTopMovie.title}</BigTitle>
+                      <BigVote>
+                        Average : {clickedTopMovie.vote_average} Score
+                      </BigVote>
+                      <BigVote>
+                        Count : {clickedTopMovie.vote_count} Votes
+                      </BigVote>
+                    </>
+                  )}
+                  {clickedUpMovie && (
+                    <>
+                      <BigCover
+                        style={{
+                          backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
+                            clickedUpMovie.backdrop_path,
+                            "w500"
+                          )})`,
+                        }}
+                      />
+                      <BigTitle>{clickedUpMovie.title}</BigTitle>
+                      <BigOverview>{clickedUpMovie.overview}</BigOverview>
                     </>
                   )}
                 </BigMovie>
