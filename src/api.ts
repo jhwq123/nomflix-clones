@@ -26,6 +26,42 @@ interface UpMovie {
   overview: string;
 }
 
+interface OnAirTv {
+  id: number;
+  backdrop_path: string;
+  poster_path: string;
+  name: string;
+  overview: string;
+  vote_average: number;
+  vote_count: number;
+}
+
+interface LatestTv {
+  name: string;
+  overview: string;
+  season_number: number;
+  air_date: string;
+}
+
+interface TopTv {
+  id: number;
+  overview: string;
+  backdrop_path: string;
+  poster_path: string;
+  name: string;
+  vote_average: number;
+  vote_count: number;
+}
+
+interface PopTv {
+  id: number;
+  overview: string;
+  backdrop_path: string;
+  name: string;
+  vote_average: number;
+  vote_count: number;
+}
+
 export interface IGetNowMoviesResult {
   dates: {
     maximum: string;
@@ -64,6 +100,36 @@ export interface IGetUpcomingMoviesResult {
   total_results: number;
 }
 
+export interface IGetOnAirTvResult {
+  page: number;
+  results: OnAirTv[];
+  total_pages: number;
+  total_results: number;
+}
+
+export interface IGetLatestTvResult {
+  id: number;
+  poster_path: string;
+  name: string;
+  overview: string;
+  last_air_date: string;
+  seasons: LatestTv[];
+}
+
+export interface IGetTopRatedTvResult {
+  page: number;
+  results: TopTv[];
+  total_pages: number;
+  total_results: number;
+}
+
+export interface IGetPopRatedTvResult {
+  page: number;
+  results: PopTv[];
+  total_pages: number;
+  total_results: number;
+}
+
 export function nowMovies() {
   return fetch(`${BASE_PATH}/movie/now_playing?api_key=${API_KEY}`).then(
     (response) => response.json()
@@ -85,5 +151,29 @@ export function topRatedMovies() {
 export function upcomingMovies() {
   return fetch(`${BASE_PATH}/movie/upcoming?api_key=${API_KEY}`).then(
     (response) => response.json()
+  );
+}
+
+export function onAirTvShows() {
+  return fetch(`${BASE_PATH}/tv/airing_today?api_key=${API_KEY}`).then(
+    (response) => response.json()
+  );
+}
+
+export function latestTvshows() {
+  return fetch(`${BASE_PATH}/tv/latest?api_key=${API_KEY}`).then((response) =>
+    response.json()
+  );
+}
+
+export function topTvshows() {
+  return fetch(`${BASE_PATH}/tv/top_rated?api_key=${API_KEY}`).then(
+    (response) => response.json()
+  );
+}
+
+export function popTvshows() {
+  return fetch(`${BASE_PATH}/tv/popular?api_key=${API_KEY}`).then((response) =>
+    response.json()
   );
 }

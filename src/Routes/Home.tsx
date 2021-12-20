@@ -7,6 +7,8 @@ import {
   IGetNowMoviesResult,
   IGetTopRatedMoviesResult,
   IGetUpcomingMoviesResult,
+  IGetLatestMoviesResult,
+  latestMovies,
 } from "../api";
 import { makeImagePath } from "../utils";
 import { motion, AnimatePresence, useViewportScroll } from "framer-motion";
@@ -29,7 +31,7 @@ const Banner = styled.div<{ bgPhoto: string }>`
   height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-end;
   background-color: red;
   padding: 60px;
   background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 1)),
@@ -313,6 +315,10 @@ function Home() {
     }
   };
 
+  // Latest Movies
+  const { data: latestData, isLoading: latestComing } =
+    useQuery<IGetLatestMoviesResult>(["movies", "latest"], latestMovies);
+
   const onBoxClicked = (movieId: number) => {
     history.push(`/movies/${movieId}`);
   };
@@ -335,15 +341,14 @@ function Home() {
     );
   return (
     <Wrapper>
-      {nowLoading && topLoading && upComing ? (
+      {nowLoading && topLoading && upComing && latestComing ? (
         <Loader>Loading</Loader>
       ) : (
         <>
-          <Banner
-            bgPhoto={makeImagePath(nowData?.results[0].backdrop_path || "")}
-          >
-            <Title>{nowData?.results[0].title}</Title>
-            <Overview>{nowData?.results[1].overview}</Overview>
+          <Banner bgPhoto={makeImagePath(latestData?.poster_path || "")}>
+            <Title>{latestData?.title}</Title>
+            <Overview>{latestData?.overview}</Overview>
+            <BigVote>Movie Release : {latestData?.release_date}</BigVote>
           </Banner>
           <SlideTitle>Now Playing Movies</SlideTitle>
           <Slider>
