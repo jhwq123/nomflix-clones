@@ -2,7 +2,6 @@ import styled from "styled-components";
 import { motion, useAnimation, useViewportScroll } from "framer-motion";
 import { Link, useRouteMatch, useHistory } from "react-router-dom";
 import { useEffect, useState } from "react";
-import Mainlogo from "../Img/Monkey-logoM.png";
 import { useForm } from "react-hook-form";
 
 const Nav = styled(motion.nav)`

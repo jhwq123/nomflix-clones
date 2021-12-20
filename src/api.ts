@@ -62,6 +62,24 @@ interface PopTv {
   vote_count: number;
 }
 
+interface SearchMovie {
+  id: number;
+  overview: string;
+  backdrop_path: string;
+  title: string;
+  vote_average: number;
+  vote_count: number;
+}
+
+interface SearchTv {
+  id: number;
+  overview: string;
+  backdrop_path: string;
+  name: string;
+  vote_average: number;
+  vote_count: number;
+}
+
 export interface IGetNowMoviesResult {
   dates: {
     maximum: string;
@@ -130,6 +148,20 @@ export interface IGetPopRatedTvResult {
   total_results: number;
 }
 
+export interface IGetSearchMovieResult {
+  page: number;
+  results: SearchMovie[];
+  total_pages: number;
+  total_results: number;
+}
+
+export interface IGetSearchTvResult {
+  page: number;
+  results: SearchTv[];
+  total_pages: number;
+  total_results: number;
+}
+
 export function nowMovies() {
   return fetch(`${BASE_PATH}/movie/now_playing?api_key=${API_KEY}`).then(
     (response) => response.json()
@@ -176,4 +208,16 @@ export function popTvshows() {
   return fetch(`${BASE_PATH}/tv/popular?api_key=${API_KEY}`).then((response) =>
     response.json()
   );
+}
+
+export function searchMovies(keyword: String) {
+  return fetch(
+    `${BASE_PATH}/search/movie?api_key=${API_KEY}&query=${keyword}`
+  ).then((response) => response.json());
+}
+
+export function searchTvShows(keyword: string) {
+  return fetch(
+    `${BASE_PATH}/search/tv?api_key=${API_KEY}&query=${keyword}`
+  ).then((response) => response.json());
 }
